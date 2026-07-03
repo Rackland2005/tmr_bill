@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>கடை பில் - Billing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Tamil:ital@0;1&family=Noto+Sans+Tamil:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --paper: #F3E9D2;
+    --paper-dark: #EADFC4;
+    --maroon: #8C1D3F;
+    --maroon-dark: #6C1531;
+    --gold: #B8863B;
+    --ink: #2E2418;
+    --ink-soft: #6b5a45;
+    --line: #C9A66B;
+    --danger: #a33636;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #fffef9 0%, transparent 40%),
+      var(--paper);
+    font-family:'Noto Sans Tamil','JetBrains Mono',sans-serif;
+    color:var(--ink);
+    padding:28px 14px 60px;
+  }
+
+  /* ---------- toolbar (not captured in jpg) ---------- */
+  .toolbar{
+    max-width:640px;
+    margin:0 auto 18px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+  }
+  .toolbar button{
+    font-family:'Noto Sans Tamil',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    border:1.5px solid var(--maroon);
+    background:#fff;
+    color:var(--maroon);
+    padding:9px 16px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease, color .15s ease;
+  }
+  .toolbar button:hover{ background:var(--maroon); color:#fff; }
+  .toolbar button:active{ transform:scale(.96); }
+  .toolbar button.primary{ background:var(--gold); border-color:var(--gold); color:#fff; }
+  .toolbar button.primary:hover{ background:#9c6f2c; border-color:#9c6f2c; }
+  .toolbar input[type=file]{ display:none; }
+
+  /* ---------- bill sheet ---------- */
+  .sheet-wrap{
+    max-width:640px;
+    margin:0 auto;
+    position:relative;
+    filter:drop-shadow(0 10px 24px rgba(76,40,20,0.18));
+  }
+  /* carbon-copy peeking sheets behind */
+  .sheet-wrap::before, .sheet-wrap::after{
+    content:"";
+    position:absolute;
+    left:6px; right:6px;
+    background:#fdf6e6;
+    border:1px solid var(--line);
+    border-radius:4px;
+    z-index:0;
+  }
+  .sheet-wrap::before{ top:10px; bottom:-6px; opacity:.9; }
+  .sheet-wrap::after{ top:6px; bottom:-10px; opacity:.55; left:12px; right:12px; }
+
+  #bill{
+    position:relative;
+    z-index:1;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  /* perforated torn-edge strip at top */
+  .perf{
+    height:14px;
+    background:
+      radial-gradient(circle at 8px 8px, transparent 6px, var(--maroon) 6.5px) ,
+      var(--maroon);
+    background-size:16px 16px;
+    background-repeat:repeat-x;
+    background-position: -4px 6px;
+  }
+
+  .bill-head{
+    background:var(--maroon);
+    color:#fdf3e2;
+    padding:14px 20px 16px;
+  }
+  .bill-head-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.02em;
+  }
+  .bill-head-top input{
+    background:transparent;
+    border:none;
+    border-bottom:1px dashed rgba(255,255,255,.5);
+    color:#fdf3e2;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    width:90px;
+    padding:1px 2px;
+  }
+  .bill-title{
+    text-align:center;
+    font-family:'Tiro Tamil', serif;
+    font-size:22px;
+    font-weight:400;
+    letter-spacing:.04em;
+    margin-top:6px;
+  }
+  .bill-title small{
+    display:block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.2em;
+    color:#e8c9a0;
+    margin-top:3px;
+  }
+
+  .from-to{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0;
+    border-bottom:2px solid var(--maroon);
+  }
+  .from-box, .to-box{
+    padding:12px 16px;
+    min-height:96px;
+  }
+  .from-box{ border-right:1px dashed var(--line); }
+  .box-label{
+    font-family:'Tiro Tamil', serif;
+    font-size:13px;
+    color:var(--maroon-dark);
+    margin-bottom:6px;
+  }
+  .logo-drop{
+    border:1.5px dashed var(--line);
+    border-radius:6px;
+    height:70px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    background:#fffdf7;
+    color:var(--ink-soft);
+    font-size:12px;
+    text-align:center;
+    padding:4px 8px;
+    overflow:hidden;
+  }
+  .logo-drop img{ max-height:100%; max-width:100%; object-fit:contain; }
+  .to-box input{
+    width:100%;
+    border:none;
+    border-bottom:1px solid var(--line);
+    background:transparent;
+    font-family:'Noto Sans Tamil',sans-serif;
+    font-size:13px;
+    padding:5px 2px;
+    margin-bottom:4px;
+    color:var(--ink);
+  }
+  .to-box input:focus{ outline:none; border-bottom-color:var(--maroon); }
+  .to-box input::placeholder{ color:#a89a80; }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  thead th{
+    background:var(--paper-dark);
+    font-family:'Tiro Tamil', serif;
+    font-weight:400;
+    font-size:14px;
+    color:var(--maroon-dark);
+    border:1px solid var(--line);
+    padding:8px 6px;
+  }
+  th.col-item{ text-align:left; padding-left:14px; }
+  td{
+    border:1px solid var(--line);
+    padding:5px 6px;
+    font-size:13.5px;
+    vertical-align:middle;
+  }
+  td.col-item select{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-family:'Noto Sans Tamil',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    padding:4px 2px;
+  }
+  td.col-qty input{
+    width:100%;
+    border:none;
+    background:transparent;
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13.5px;
+    color:var(--ink);
+    padding:4px 2px;
+  }
+  .rs-wrap{ display:flex; align-items:center; gap:2px; }
+  .rs-wrap span{ color:var(--ink-soft); font-family:'JetBrains Mono',monospace; }
+  td.col-rs input{
+    width:100%;
+    border:none;
+    background:transparent;
+    text-align:right;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13.5px;
+    color:var(--ink);
+    padding:4px 2px;
+  }
+  tr.total-row td{ background:#f6e9cf; font-weight:700; }
+  tr.total-row td.col-rs input{ color:var(--maroon-dark); font-weight:700; }
+  select:focus, input:focus{ outline:none; }
+
+  .row-del{
+    border:none;
+    background:none;
+    color:var(--danger);
+    font-size:15px;
+    cursor:pointer;
+    line-height:1;
+    padding:2px 4px;
+  }
+  td.col-del{ text-align:center; width:26px; padding:2px; }
+
+  .add-row-cell{
+    text-align:center;
+    padding:9px;
+  }
+  .add-row-btn{
+    border:1.5px dashed var(--maroon);
+    background:transparent;
+    color:var(--maroon);
+    font-family:'Noto Sans Tamil',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:6px 18px;
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .add-row-btn:hover{ background:var(--maroon); color:#fff; }
+
+  .bill-foot{
+    text-align:center;
+    padding:14px 16px 18px;
+    border-top:2px solid var(--maroon);
+  }
+  .bill-foot .thanks{
+    font-family:'Tiro Tamil', serif;
+    font-size:15px;
+    color:var(--maroon-dark);
+  }
+  .bill-foot .note{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-top:4px;
+    letter-spacing:.03em;
+  }
+
+  .no-print{ }
+  body.capturing .no-print{ visibility:hidden !important; }
+
+  @media (max-width:480px){
+    .bill-title{ font-size:18px; }
+    th, td{ font-size:12px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="toolbar">
+    
+    <button id="downloadBtn" class="primary">📥 JPG பதிவிறக்கு</button>
+    
+  </div>
+
+  <div class="sheet-wrap">
+    <div id="bill">
+      <div class="perf"></div>
+
+      <div class="bill-head">
+        <div class="bill-head-top">
+          <span>எண்: <input type="text" id="billNo" placeholder="001"></span>
+          <span>தேதி: <input type="text" id="billDate"></span>
+        </div>
+        <div class="bill-title">TMR EVENTS
+          <small>CASH &nbsp;/&nbsp; CREDIT BILL</small>
+        </div>
+      </div>
+
+      <div class="from-to">
+        <div class="from-box">
+          <div class="box-label">FROM</div>
+          <div class="logo-drop" id="logoDrop"><img src="logo.png" alt="logo"></div>
+          
+        </div>
+        <div class="to-box">
+          <div class="box-label">TO</div>
+          <input type="text" id="custName" placeholder="பெயர்">
+          <input type="text" id="custPhone" placeholder="தொலைபேசி எண்">
+          <input type="text" id="custPlace" placeholder="ஊர் / இடம்">
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th class="col-item">விபரம்<br><span style="font-family:'JetBrains Mono';font-size:9px;color:var(--ink-soft)">PARTICULARS</span></th>
+            <th style="width:20%">எண்ணம்<br><span style="font-family:'JetBrains Mono';font-size:9px;color:var(--ink-soft)">QTY</span></th>
+            <th style="width:28%">ரூபாய்<br><span style="font-family:'JetBrains Mono';font-size:9px;color:var(--ink-soft)">Rs.</span></th>
+            <th class="no-print" style="width:20px;border:none;background:transparent"></th>
+          </tr>
+        </thead>
+        <tbody id="rowsBody"></tbody>
+        <tfoot>
+          <tr class="no-print">
+            <td colspan="4" class="add-row-cell"><button class="add-row-btn" id="addRowBtn2">+ வரிசை சேர்</button></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="bill-foot">
+        <div class="thanks">நன்றி! </div>
+        <div class="note"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const ITEMS = [
+  "பாப்கார்ன்",
+  "பஞ்சு மிட்டாய்",
+  "ஐஸ்கிரீம் (ஸ்கூப்பிங்)",
+  "ஐஸ்கிரீம் (கோன்)",
+  "கசட்டா",
+  "டீ ஸ்டால் (பிளாக் டீ)",
+  "டீ ஸ்டால் (மில்க் டீ)",
+  "ஸ்வீட் பீடா",
+  "பெயர் பலூன்",
+  "சாக்லேட் பவுண்டேசன்",
+  "சீவல் ஐஸ்",
+  "லைவ் ஜூஸ்",
+  
+  "மொத்தம்"
+];
+const TOTAL_LABEL = "மொத்தம்";
+const ADVANCE_LABEL = "அட்வான்ஸ்";
+
+const rowsBody = document.getElementById('rowsBody');
+let rowId = 0;
+
+function buildSelect(selected){
+  let html = `<select class="item-select">`;
+  html += `<option value="">-- தேர்வு செய்க --</option>`;
+  ITEMS.forEach(it=>{
+    html += `<option value="${it}" ${it===selected?'selected':''}>${it}</option>`;
+  });
+  html += `</select>`;
+  return html;
+}
+
+function addRow(prefill){
+  rowId++;
+  const tr = document.createElement('tr');
+  tr.dataset.id = rowId;
+  tr.innerHTML = `
+    <td class="col-item">${buildSelect(prefill||'')}</td>
+    <td class="col-qty"><input type="text" inputmode="numeric" placeholder=""></td>
+    <td class="col-rs"><div class="rs-wrap"><span>₹</span><input type="text" inputmode="decimal" placeholder=""></div></td>
+    <td class="col-del no-print"><button class="row-del" title="நீக்கு">✕</button></td>
+  `;
+  rowsBody.appendChild(tr);
+  wireRow(tr);
+  recalcTotals();
+}
+
+function wireRow(tr){
+  const select = tr.querySelector('.item-select');
+  const qtyInput = tr.querySelector('.col-qty input');
+  const rsInput = tr.querySelector('.col-rs input');
+  const delBtn = tr.querySelector('.row-del');
+
+  select.addEventListener('change', ()=>{
+    const val = select.value;
+    tr.classList.toggle('total-row', val === TOTAL_LABEL);
+    if(val === TOTAL_LABEL){
+      qtyInput.value = '';
+      qtyInput.disabled = true;
+      rsInput.disabled = true;
+    } else {
+      qtyInput.disabled = false;
+      rsInput.disabled = false;
+    }
+    recalcTotals();
+  });
+
+  qtyInput.addEventListener('input', recalcTotals);
+  rsInput.addEventListener('input', recalcTotals);
+
+  delBtn.addEventListener('click', ()=>{
+    tr.remove();
+    recalcTotals();
+  });
+}
+
+function recalcTotals(){
+  let sum = 0;
+  const trs = [...rowsBody.querySelectorAll('tr')];
+  trs.forEach(tr=>{
+    const select = tr.querySelector('.item-select');
+    const rsInput = tr.querySelector('.col-rs input');
+    if(select.value !== TOTAL_LABEL){
+      const v = parseFloat(rsInput.value);
+      if(!isNaN(v)) sum += v;
+    }
+  });
+  trs.forEach(tr=>{
+    const select = tr.querySelector('.item-select');
+    const rsInput = tr.querySelector('.col-rs input');
+    if(select.value === TOTAL_LABEL){
+      rsInput.value = sum.toFixed(2);
+    }
+  });
+}
+
+// initial rows
+for(let i=0;i<6;i++) addRow();
+
+document.getElementById('addRowBtn').addEventListener('click', ()=>addRow());
+document.getElementById('addRowBtn2').addEventListener('click', ()=>addRow());
+
+// date
+function todayStr(){
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+document.getElementById('billDate').value = todayStr();
+
+// logo upload
+const logoInput = document.getElementById('logoInput');
+const logoDrop = document.getElementById('logoDrop');
+logoDrop.addEventListener('click', ()=>logoInput.click());
+logoInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    logoDrop.innerHTML = `<img src="${ev.target.result}" alt="logo">`;
+  };
+  reader.readAsDataURL(file);
+});
+
+// reset
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm('புதிய பில் தொடங்கவா? தற்போதைய தகவல்கள் அழிக்கப்படும்.')) return;
+  rowsBody.innerHTML = '';
+  document.getElementById('custName').value='';
+  document.getElementById('custPhone').value='';
+  document.getElementById('custPlace').value='';
+  document.getElementById('billNo').value='';
+  document.getElementById('billDate').value = todayStr();
+  logoDrop.innerHTML = 'நிறுவனப் பெயர் &amp; தொலைபேசி எண் கொண்ட லோகோவை பதிவேற்ற இங்கே சொடுக்கவும்';
+  for(let i=0;i<6;i++) addRow();
+});
+
+// download as jpg
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const billEl = document.getElementById('bill');
+  document.body.classList.add('capturing');
+  html2canvas(billEl, {
+    scale: 2,
+    backgroundColor: '#F3E9D2',
+    useCORS: true,
+    ignoreElements: (el)=> el.classList && el.classList.contains('no-print')
+  }).then(canvas=>{
+    document.body.classList.remove('capturing');
+    const link = document.createElement('a');
+    const no = document.getElementById('billNo').value || 'bill';
+    link.download = `bill-${no}-${Date.now()}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  }).catch(err=>{
+    document.body.classList.remove('capturing');
+    alert('படமாக மாற்றுவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.');
+    console.error(err);
+  });
+});
+</script>
+</body>
+</html>
