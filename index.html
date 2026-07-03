@@ -409,15 +409,17 @@ const ITEMS = [
   "டீ ஸ்டால் (பிளாக் டீ)",
   "டீ ஸ்டால் (மில்க் டீ)",
   "ஸ்வீட் பீடா",
-  "பெயர் பலூன்",
+  "பேப்பர் பலூன்",
   "சாக்லேட் பவுண்டேசன்",
   "சீவல் ஐஸ்",
-  "லைவ் ஜூஸ்",
-  
-  "மொத்தம்"
+  "லெமன் ஜூஸ்",
+  "அட்வான்ஸ்",
+  "மொத்தம்",
+  "மீதி"
 ];
 const TOTAL_LABEL = "மொத்தம்";
 const ADVANCE_LABEL = "அட்வான்ஸ்";
+const BALANCE_LABEL = "மீதி";
 
 const rowsBody = document.getElementById('rowsBody');
 let rowId = 0;
@@ -455,8 +457,9 @@ function wireRow(tr){
 
   select.addEventListener('change', ()=>{
     const val = select.value;
-    tr.classList.toggle('total-row', val === TOTAL_LABEL);
-    if(val === TOTAL_LABEL){
+    const isCalc = (val === TOTAL_LABEL || val === BALANCE_LABEL);
+    tr.classList.toggle('total-row', isCalc);
+    if(isCalc){
       qtyInput.value = '';
       qtyInput.disabled = true;
       rsInput.disabled = true;
@@ -477,21 +480,29 @@ function wireRow(tr){
 }
 
 function recalcTotals(){
-  let sum = 0;
+  let itemSum = 0;
+  let advanceSum = 0;
   const trs = [...rowsBody.querySelectorAll('tr')];
   trs.forEach(tr=>{
     const select = tr.querySelector('.item-select');
     const rsInput = tr.querySelector('.col-rs input');
-    if(select.value !== TOTAL_LABEL){
+    const val = select.value;
+    if(val === ADVANCE_LABEL){
       const v = parseFloat(rsInput.value);
-      if(!isNaN(v)) sum += v;
+      if(!isNaN(v)) advanceSum += v;
+    } else if(val !== TOTAL_LABEL && val !== BALANCE_LABEL){
+      const v = parseFloat(rsInput.value);
+      if(!isNaN(v)) itemSum += v;
     }
   });
+  const balance = itemSum - advanceSum;
   trs.forEach(tr=>{
     const select = tr.querySelector('.item-select');
     const rsInput = tr.querySelector('.col-rs input');
     if(select.value === TOTAL_LABEL){
-      rsInput.value = sum.toFixed(2);
+      rsInput.value = itemSum.toFixed(2);
+    } else if(select.value === BALANCE_LABEL){
+      rsInput.value = balance.toFixed(2);
     }
   });
 }
