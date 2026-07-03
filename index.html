@@ -8,6 +8,58 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Tamil:ital@0;1&family=Noto+Sans+Tamil:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
+  .no-print{ }
+  body.capturing .no-print{ visibility:hidden !important; }
+
+  /* ---------- responsive breakpoints ---------- */
+
+  /* Large desktop: more breathing room, sheet stays readable width */
+  @media (min-width:1024px){
+    body{ padding:48px 20px 80px; }
+    .sheet-wrap{ max-width:680px; }
+    .toolbar{ max-width:680px; }
+    .toolbar button{ padding:10px 20px; font-size:14.5px; }
+  }
+
+  /* Small tablet / large phone */
+  @media (max-width:768px){
+    .from-box, .to-box{ padding:10px 12px; }
+  }
+
+  /* Phones */
+  @media (max-width:480px){
+    body{ padding:16px 8px 48px; }
+    .toolbar{ gap:8px; }
+    .toolbar button{ font-size:12.5px; padding:8px 12px; flex:1 1 auto; }
+    .bill-title{ font-size:17px; }
+    .bill-title small{ font-size:9.5px; }
+    .bill-head{ padding:11px 12px 13px; }
+    .bill-head-top{ font-size:11px; }
+    .bill-head-top input{ width:66px; font-size:11px; }
+
+    .from-to{ grid-template-columns:1fr; }
+    .from-box{ border-right:none; border-bottom:1px dashed var(--line); }
+    .logo-drop{ height:56px; font-size:10.5px; }
+    .to-box input{ font-size:12px; padding:4px 2px; }
+
+    th, td{ font-size:11.5px; padding:4px 3px; }
+    th.col-item{ padding-left:8px; }
+    thead th span{ font-size:8px !important; }
+    td.col-item select{ font-size:11.5px; padding:3px 1px; }
+    td.col-qty input, td.col-rs input{ font-size:11.5px; }
+    .rs-wrap span{ font-size:11px; }
+
+    .add-row-btn{ font-size:11.5px; padding:5px 14px; }
+    .bill-foot .thanks{ font-size:13px; }
+    .bill-foot .note{ font-size:9px; }
+  }
+
+  /* Very small phones */
+  @media (max-width:360px){
+    .bill-title{ font-size:15px; }
+    .bill-head-top input{ width:52px; }
+    th, td{ font-size:10.5px; }
+  }
   :root{
     --paper: #F3E9D2;
     --paper-dark: #EADFC4;
